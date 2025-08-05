@@ -35,7 +35,7 @@ time.sleep(4)
 
 FEATURE_COLS = ['RSI', 'k_percent', 'r_percent', 'MACD', 'MACD_EMA', 'Price_Rate_Of_Change']
 
-def get_oanda_candles(pair, granularity="M1", count=100):
+def get_oanda_candles(pair, granularity="M1", count=500):
     try:
         client = oandapyV20.API(access_token=ACCESS_TOKEN)
         params = {"granularity": granularity, "count": count}
@@ -78,7 +78,7 @@ def get_df():
     try:
         for i, pair in enumerate(global_value.pairs, 1):
             oanda_pair = pair[:3] + "_" + pair[3:]  # e.g., EURUSD → EUR_USD
-            df = get_oanda_candles(oanda_pair, granularity="M1", count=100)
+            df = get_oanda_candles(oanda_pair, granularity="M1", count=500)
 
             if df is not None:
                 global_value.pairs[pair]['dataframe'] = df
@@ -253,3 +253,4 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
+
