@@ -21,13 +21,12 @@ ssid = os.getenv("PO_SSID")
 demo = True
 
 # Bot Settings
-min_payout = 70
+min_payout = 80
 period = 60  
 expiration = 60
 INITIAL_AMOUNT = 1
 MARTINGALE_LEVEL = 3
-MIN_ACTIVE_PAIRS = 1
-PROB_THRESHOLD = 0.76
+PROB_THRESHOLD = 0.6
 
 api = PocketOption(ssid, demo)
 api.connect()
@@ -74,23 +73,6 @@ def get_payout():
         global_value.logger(f"[ERROR]: Failed to parse payout data - {str(e)}", "ERROR")
         return False
 
-def get_df():
-    try:
-        for i, pair in enumerate(global_value.pairs, 1):
-            oanda_pair = pair[:3] + "_" + pair[3:]  # e.g., EURUSD → EUR_USD
-            df = get_oanda_candles(oanda_pair, granularity="M1", count=500)
-
-            if df is not None:
-                global_value.pairs[pair]['dataframe'] = df
-                global_value.logger(f"[{i}/{len(global_value.pairs)}] {pair}: Fetched {len(df)} candles from OANDA", "INFO")
-            else:
-                global_value.logger(f"[{i}/{len(global_value.pairs)}] {pair}: Failed to fetch candles", "ERROR")
-            time.sleep(1)
-        return True
-    except Exception as e:
-        global_value.logger(f"[ERROR]: Error in get_df() - {str(e)}", "ERROR")
-        return False
-
 def prepare_data(df):
     df = df[['time', 'open', 'high', 'low', 'close']]
     df.rename(columns={'time': 'timestamp'}, inplace=True)
@@ -116,8 +98,6 @@ def train_and_predict(df):
     X_train = df[FEATURE_COLS].iloc[:-1]
     y_train = df['Prediction'].iloc[:-1]
 
- 
-    # global_value.logger("📊 Latest data preview:\n" + str(df.tail(1)[['timestamp', 'close','RSI', 'SUPERT_10_3.0', 'SUPERTd_10_3.0']]), "INFO")
     global_value.logger("📊 Latest data preview:\n" + str(df.shape), "INFO")
     model = RandomForestClassifier(n_estimators=100, oob_score=True, criterion="gini", random_state=0)
     model.fit(X_train, y_train)
@@ -130,7 +110,13 @@ def train_and_predict(df):
     latest_dir = df.iloc[-1]['SUPERTd_10_3.0']
     current_trend = df.iloc[-1]['SUPERT_10_3.0']
     past_trend = df.iloc[-3]['SUPERT_10_3.0']
-    
+    rsi = df.iloc[-1]['RSI']
+
+    # Prevent trading in overbought/oversold markets
+    if rsi > 70 or rsi < 30:
+        global_value.logger(f"⏭️ Skipping trade due to RSI ({rsi:.2f}) being overbought/oversold.", "INFO")
+        return None
+
     if call_conf > PROB_THRESHOLD:
         if latest_dir == 1 and current_trend != past_trend:
             decision = "call"
@@ -253,4 +239,3 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
-
