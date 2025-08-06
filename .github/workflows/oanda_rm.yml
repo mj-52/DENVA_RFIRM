@@ -1,6 +1,5 @@
 name: i_anda_rm
 
-
 on:
   workflow_dispatch:    # Manual run
   schedule:             # Automatic re-run every 6 hours
