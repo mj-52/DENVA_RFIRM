@@ -1,9 +1,14 @@
 name: i_anda_rm
 
+
 on:
   workflow_dispatch:    # Manual run
   schedule:             # Automatic re-run every 6 hours
     - cron: "0 */6 * * *"  # At minute 0, every 6th hour
+
+concurrency:
+  group: i_anda_rm
+  cancel-in-progress: true
 
 jobs:
   run-bot:
@@ -26,12 +31,10 @@ jobs:
       run: |
         unzip pocketoptionapi.zip -d ./
 
-
     - name: Run the bot
       env:
         OANDA_TOKEN: ${{ secrets.OANDA_TOKEN }}
         OANDA_ID: ${{ secrets.OANDA_ID }}
         PO_SSID: ${{ secrets.PO_SSID }}
-
       run: |
         python main_rm.py
