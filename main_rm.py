@@ -21,7 +21,7 @@ ssid = os.getenv("PO_SSID")
 demo = True
 
 # Bot Settings
-min_payout = 60
+min_payout = 80
 period = 60  
 expiration = 60
 INITIAL_AMOUNT = 1
@@ -281,3 +281,4 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
+
