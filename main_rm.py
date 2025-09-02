@@ -24,7 +24,7 @@ min_payout = 60
 period = 60
 expiration = 60
 INITIAL_AMOUNT = 1
-MARTINGALE_LEVEL = 3
+MARTINGALE_LEVEL = 2
 
 api = PocketOption(ssid, demo)
 api.connect()
@@ -217,3 +217,4 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
+
