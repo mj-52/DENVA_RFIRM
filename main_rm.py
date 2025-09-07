@@ -25,7 +25,7 @@ min_payout = 80
 period = 300
 expiration = 300
 INITIAL_AMOUNT = 1
-MARTINGALE_LEVEL = 3
+MARTINGALE_LEVEL = 1
 PROB_THRESHOLD = 0.76
 
 api = PocketOption(ssid, demo)
@@ -154,26 +154,26 @@ def train_and_predict(df):
         global_value.logger(f"⏭️ Skipping trade due to RSI ({rsi:.2f}) being overbought/oversold.", "INFO")
         return None
 
-    # # Add trend check: skip if current trend != past trend
-    # if current_trend == past_trend:
-    #     global_value.logger(f"⏭️ Skipping trade due to flat trend (current: {current_trend}, past: {past_trend})", "INFO")
-    #     return None
+    # Add trend check: skip if current trend != past trend
+    if current_trend == past_trend:
+        global_value.logger(f"⏭️ Skipping trade due to flat trend (current: {current_trend}, past: {past_trend})", "INFO")
+        return None
 
     if call_conf > PROB_THRESHOLD:
-        if latest_dir == 1 :
+        if latest_dir == 1 and latest_pivot_high is not None and current_price < latest_pivot_high:
             decision = "call"
             emoji = "🟢"
             confidence = call_conf
         else:
-            global_value.logger(f"⏭️ Skipping CALL ({call_conf:.2%}) due to trend mismatch ", "INFO")
+            global_value.logger(f"⏭️ Skipping CALL ({call_conf:.2%}) due to trend mismatch or price above pivot high.", "INFO")
             return None
     elif put_conf > PROB_THRESHOLD:
-        if latest_dir == -1 :
+        if latest_dir == -1 and latest_pivot_low is not None and current_price > latest_pivot_low:
             decision = "put"
             emoji = "🔴"
             confidence = put_conf
         else:
-            global_value.logger(f"⏭️ Skipping PUT ({put_conf:.2%}) due to trend mismatch", "INFO")
+            global_value.logger(f"⏭️ Skipping PUT ({put_conf:.2%}) due to trend mismatch or price below pivot low.", "INFO")
             return None
     else:
         if call_conf > put_conf:
