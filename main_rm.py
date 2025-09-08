@@ -22,8 +22,8 @@ demo = True
 
 # Bot Settings
 min_payout = 80
-period = 300
-expiration = 300
+period = 60
+expiration = 60
 INITIAL_AMOUNT = 1
 MARTINGALE_LEVEL = 1
 PROB_THRESHOLD = 0.76
@@ -34,7 +34,7 @@ time.sleep(5)
 
 FEATURE_COLS = ['RSI', 'k_percent', 'r_percent', 'MACD', 'MACD_EMA', 'Price_Rate_Of_Change']
 
-def get_oanda_candles(pair, granularity="M5", count=500):
+def get_oanda_candles(pair, granularity="M1", count=500):
     try:
         client = oandapyV20.API(access_token=ACCESS_TOKEN)
         params = {"granularity": granularity, "count": count}
@@ -281,5 +281,6 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
+
 
 
