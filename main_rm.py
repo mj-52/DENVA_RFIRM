@@ -21,12 +21,12 @@ ssid = os.getenv("PO_SSID")
 demo = True
 
 # Bot Settings
-min_payout = 80
+min_payout = 50
 period = 60
 expiration = 60
 INITIAL_AMOUNT = 1
 MARTINGALE_LEVEL = 1
-PROB_THRESHOLD = 0.76
+PROB_THRESHOLD = 0.5
 
 api = PocketOption(ssid, demo)
 api.connect()
@@ -281,6 +281,7 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
+
 
 
 
