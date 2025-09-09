@@ -60,7 +60,7 @@ def get_oanda_candles(pair, granularity="M1", count=500, retries=3, delay=1):
 
         except Exception as e:
             global_value.logger(
-                f"[ERROR]: OANDA candle fetch failed for {pair} (attempt {attempt}/{retries}) - {str(e)}",
+                f"[ERROR]: OANDA candle fetch failed for {pair} (attempt {attempt}/{retries})",
                 "ERROR"
             )
             time.sleep(delay)
@@ -294,3 +294,4 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
+
