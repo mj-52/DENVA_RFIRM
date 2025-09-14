@@ -22,11 +22,14 @@ demo = True
 
 # Bot Settings
 min_payout = 80
-period = 60
-expiration = 60
+period = 300
+expiration = 300
 INITIAL_AMOUNT = 1
 MARTINGALE_LEVEL = 3
-PROB_THRESHOLD = 0.65
+PROB_THRESHOLD = 0.76
+
+# Only consider this pair (no space, matches PocketOption naming like 'GBPJPY')
+PAIR = "GBPJPY"
 
 api = PocketOption(ssid, demo)
 api.connect()
@@ -34,38 +37,25 @@ time.sleep(5)
 
 FEATURE_COLS = ['RSI', 'k_percent', 'r_percent', 'MACD', 'MACD_EMA', 'Price_Rate_Of_Change']
 
-def get_oanda_candles(pair, granularity="M1", count=500, retries=3, delay=1):
-    client = oandapyV20.API(access_token=ACCESS_TOKEN)
-    params = {"granularity": granularity, "count": count}
-
-    for attempt in range(1, retries + 1):
-        try:
-            r = instruments.InstrumentsCandles(instrument=pair, params=params)
-            client.request(r)
-
-            if "candles" not in r.response:
-                raise ValueError("No candle data in response")
-
-            candles = r.response['candles']
-            df = pd.DataFrame([{
-                'time': c['time'],
-                'open': float(c['mid']['o']),
-                'high': float(c['mid']['h']),
-                'low': float(c['mid']['l']),
-                'close': float(c['mid']['c']),
-            } for c in candles])
-
-            df['time'] = pd.to_datetime(df['time'])
-            return df
-
-        except Exception as e:
-            global_value.logger(
-                f"[ERROR]: OANDA candle fetch failed for {pair} (attempt {attempt}/{retries})",
-                "ERROR"
-            )
-            time.sleep(delay)
-
-    return None
+def get_oanda_candles(pair, granularity="M5", count=500):
+    try:
+        client = oandapyV20.API(access_token=ACCESS_TOKEN)
+        params = {"granularity": granularity, "count": count}
+        r = instruments.InstrumentsCandles(instrument=pair, params=params)
+        client.request(r)
+        candles = r.response['candles']
+        df = pd.DataFrame([{
+            'time': c['time'],
+            'open': float(c['mid']['o']),
+            'high': float(c['mid']['h']),
+            'low': float(c['mid']['l']),
+            'close': float(c['mid']['c']),
+        } for c in candles])
+        df['time'] = pd.to_datetime(df['time'])
+        return df
+    except Exception as e:
+        global_value.logger(f"[ERROR]: OANDA candle fetch failed for {pair} ", "ERROR")
+        return None
 
 def get_payout():
     try:
@@ -75,6 +65,12 @@ def get_payout():
             payout = pair[5]
             asset_type = pair[3]
             is_active = pair[14]
+
+            # Only look for the configured pair
+            if name != PAIR:
+                if name in global_value.pairs:
+                    del global_value.pairs[name]
+                continue
 
             if not name.endswith("_otc") and asset_type == "currency" and is_active:
                 if payout >= min_payout:
@@ -105,7 +101,7 @@ def prepare_data(df):
 
     df['Prediction'] = (df['close'].shift(-1) > df['close']).astype(int)
     df.dropna(inplace=True)
-    df.reset_index(drop=True, inplace=True)  # <-- Add this line
+    df.reset_index(drop=True, inplace=True) 
     return df
 
 def pivotid(df1, l, n1, n2):
@@ -294,6 +290,5 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
-
 
 
