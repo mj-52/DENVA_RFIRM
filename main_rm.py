@@ -21,15 +21,15 @@ ssid = os.getenv("PO_SSID")
 demo = True
 
 # Bot Settings
-min_payout = 80
-period = 300
-expiration = 300
+min_payout = 60
+period = 60
+expiration = 60
 INITIAL_AMOUNT = 1
 MARTINGALE_LEVEL = 3
-PROB_THRESHOLD = 0.76
+PROB_THRESHOLD = 0.6
 
 # Only consider this pair (no space, matches PocketOption naming like 'GBPJPY')
-PAIR = "GBPJPY"
+PAIR = "EURUSD"
 
 api = PocketOption(ssid, demo)
 api.connect()
@@ -37,7 +37,7 @@ time.sleep(5)
 
 FEATURE_COLS = ['RSI', 'k_percent', 'r_percent', 'MACD', 'MACD_EMA', 'Price_Rate_Of_Change']
 
-def get_oanda_candles(pair, granularity="M5", count=500):
+def get_oanda_candles(pair, granularity="M1", count=500):
     try:
         client = oandapyV20.API(access_token=ACCESS_TOKEN)
         params = {"granularity": granularity, "count": count}
@@ -163,26 +163,26 @@ def train_and_predict(df):
         global_value.logger(f"⏭️ Skipping trade due to RSI ({rsi:.2f}) being overbought/oversold.", "INFO")
         return None
 
-    # Add trend check: skip if current trend != past trend
-    if current_trend == past_trend:
-        global_value.logger(f"⏭️ Skipping trade due to flat trend (current: {current_trend}, past: {past_trend})", "INFO")
-        return None
+    # # Add trend check: skip if current trend != past trend
+    # if current_trend == past_trend:
+    #     global_value.logger(f"⏭️ Skipping trade due to flat trend (current: {current_trend}, past: {past_trend})", "INFO")
+    #     return None
 
     if call_conf > PROB_THRESHOLD:
-        if latest_dir == 1 and latest_pivot_high is not None and current_price < latest_pivot_high:
+        if latest_dir == 1: #and latest_pivot_high is not None and current_price < latest_pivot_high:
             decision = "call"
             emoji = "🟢"
             confidence = call_conf
         else:
-            global_value.logger(f"⏭️ Skipping CALL ({call_conf:.2%}) due to trend mismatch or price above pivot high.", "INFO")
+            global_value.logger(f"⏭️ Skipping CALL ({call_conf:.2%}) due to trend mismatch ", "INFO")
             return None
     elif put_conf > PROB_THRESHOLD:
-        if latest_dir == -1 and latest_pivot_low is not None and current_price > latest_pivot_low:
+        if latest_dir == -1: #and latest_pivot_low is not None and current_price > latest_pivot_low:
             decision = "put"
             emoji = "🔴"
             confidence = put_conf
         else:
-            global_value.logger(f"⏭️ Skipping PUT ({put_conf:.2%}) due to trend mismatch or price below pivot low.", "INFO")
+            global_value.logger(f"⏭️ Skipping PUT ({put_conf:.2%}) due to trend mismatch ", "INFO")
             return None
     else:
         if call_conf > put_conf:
@@ -290,6 +290,5 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
-
 
 
