@@ -195,41 +195,30 @@ def train_and_predict(df):
     return decision
 
 def perform_trade(amount, pair, action, expiration):
-    result = api.buy(amount=amount, active=pair, action=action, expirations=expiration)
-    trade_id = result[1]
+    """
+    Submit a single trade and do not wait for result. Returns trade id on success, None on failure.
+    """
+    try:
+        result = api.buy(amount=amount, active=pair, action=action, expirations=expiration)
+        trade_id = result[1]
 
-    if result[0] is False or trade_id is None:
-        global_value.logger("❗Trade failed to execute. Attempting reconnection...", "ERROR")
-        api.disconnect()
-        time.sleep(2)
-        api.connect()
+        if result[0] is False or trade_id is None:
+            global_value.logger("❗Trade failed to execute. Attempting reconnection...", "ERROR")
+            api.disconnect()
+            time.sleep(2)
+            api.connect()
+            return None
+
+        return trade_id
+    except Exception as e:
+        global_value.logger(f"[ERROR]: Exception while placing trade - {e}", "ERROR")
+        try:
+            api.disconnect()
+            time.sleep(2)
+            api.connect()
+        except:
+            pass
         return None
-
-    time.sleep(expiration)
-    return api.check_win(trade_id)
-
-def martingale_strategy(pair, action):
-    global current_profit
-
-    amount = INITIAL_AMOUNT
-    level = 1
-    result = perform_trade(amount, pair, action, expiration)
-
-    if result is None:
-        return
-
-    while result[1] == 'loose' and level < MARTINGALE_LEVEL:
-        level += 1
-        amount *= 2
-        result = perform_trade(amount, pair, action, expiration)
-
-        if result is None:
-            return
-        
-    if result[1] != 'loose':
-        global_value.logger("WIN - Resetting to base amount.", "INFO")
-    else:
-        global_value.logger("LOSS. Resetting.", "INFO")
 
 def wait_until_next_candle(period_seconds=300, seconds_before=5):
     while True:
@@ -281,12 +270,11 @@ def main_trading_loop():
 
         if selected_pair and selected_action:
             global_value.logger(f"🚀 Executing trade on {selected_pair} - {selected_action.upper()}", "INFO")
-            martingale_strategy(selected_pair, selected_action)
+            trade_id = perform_trade(INITIAL_AMOUNT, selected_pair, selected_action, expiration)
         else:
             global_value.logger("⛔ No valid trading signal this cycle.", "INFO")
 
-        # Optional: small pause before starting next cycle
-        time.sleep(2)
+        time.sleep(1)
 
 if __name__ == "__main__":
     main_trading_loop()
