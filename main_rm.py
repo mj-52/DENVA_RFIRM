@@ -138,7 +138,7 @@ def train_and_predict(df):
 
     latest_dir = df.iloc[-1]['SUPERTd_10_3.0']
     current_trend = df.iloc[-1]['SUPERT_10_3.0']
-    past_trend = df.iloc[-3]['SUPERT_10_3.0']
+    past_trend = df.iloc[-2]['SUPERT_10_3.0']
     rsi = df.iloc[-1]['RSI']
 
     # Calculate pivots
@@ -163,13 +163,13 @@ def train_and_predict(df):
         global_value.logger(f"⏭️ Skipping trade due to RSI ({rsi:.2f}) being overbought/oversold.", "INFO")
         return None
 
-    # # Add trend check: skip if current trend != past trend
-    # if current_trend == past_trend:
-    #     global_value.logger(f"⏭️ Skipping trade due to flat trend (current: {current_trend}, past: {past_trend})", "INFO")
-    #     return None
+    # Add trend check: skip if current trend != past trend
+    if current_trend == past_trend:
+        global_value.logger(f"⏭️ Skipping trade due to flat trend (current: {current_trend}, past: {past_trend})", "INFO")
+        return None
 
     if call_conf > PROB_THRESHOLD:
-        if latest_dir == 1: #and latest_pivot_high is not None and current_price < latest_pivot_high:
+        if latest_dir == 1 and latest_pivot_high is not None and current_price < latest_pivot_high:
             decision = "call"
             emoji = "🟢"
             confidence = call_conf
@@ -177,7 +177,7 @@ def train_and_predict(df):
             global_value.logger(f"⏭️ Skipping CALL ({call_conf:.2%}) due to trend mismatch ", "INFO")
             return None
     elif put_conf > PROB_THRESHOLD:
-        if latest_dir == -1: #and latest_pivot_low is not None and current_price > latest_pivot_low:
+        if latest_dir == -1 and latest_pivot_low is not None and current_price > latest_pivot_low:
             decision = "put"
             emoji = "🔴"
             confidence = put_conf
@@ -278,5 +278,6 @@ def main_trading_loop():
 
 if __name__ == "__main__":
     main_trading_loop()
+
 
 
